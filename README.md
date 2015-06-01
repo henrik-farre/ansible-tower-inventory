@@ -20,4 +20,4 @@ Usage:
 
 3. Set the TOWER_INVENTORY_ID environment variable with the id of the inventory you would like to use
 
-4. Make sure tower_inventory is executeable and use it as an inventory file. E.g.: ansible all -i tower_inventory.py is executeable and use it as an inventory file. E.g.: ansible all -i tower_inventory.py -m ping
+4. Make sure tower_inventory is executeable and use it as an inventory file. E.g.: ansible all -i tower_inventory.py -m ping
