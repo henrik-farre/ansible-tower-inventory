@@ -129,7 +129,6 @@ class TowerInventory(object):
         self.inventory['_meta']['hostvars'] = dict()
 
         groups = self.get_groups()
-
         for group in groups:
             group_data = dict()
             host_list = []
