@@ -70,11 +70,11 @@ class TowerInventory(object):
             print "Plase set the environment variable TOWER_URL"
             exit()
 
-        if (not tower_username or not tower_password):
+        if not tower_username or not tower_password:
             print "Please set the environment variables TOWER_USERNAME and TOWER_PASSWORD"
             exit()
 
-        if (not tower_inventory_id and not self.args.list_inventories):
+        if not tower_inventory_id and not self.args.list_inventories:
             print "Please set the environment variable TOWER_INVENTORY_ID or use the argument --list-inventories to list available inventories"
             exit()
 
@@ -93,15 +93,15 @@ class TowerInventory(object):
         self.args = parser.parse_args()
 
     def list_inventories(self):
-	    inventories_request = requests.get(self.tower_url + "/api/v1/inventories/", auth=self.tower_credentials, verify=self.ssl_verify)
-	    inventories = inventories_request.json()
+        data = []
 
-	    data = []
+	r = requests.get(self.tower_url + "/api/v1/inventories/", auth=self.tower_credentials, verify=self.ssl_verify)
+	inventories = r.json()
 
-	    for inventory in inventories['results']:
-	        data.append("[{}] {}".format(inventory['id'], inventory['name']))
+	for inventory in inventories['results']:
+	    data.append("[{}] {}".format(inventory['id'], inventory['name']))
 
-	    return '\n'.join(data)
+	return '\n'.join(data)
 
     def get_groups(self):
         r = requests.get(self.tower_url + '/api/v1/inventories/' + self.tower_inventory_id + '/groups/', auth=self.tower_credentials, verify=self.ssl_verify)
@@ -131,14 +131,11 @@ class TowerInventory(object):
         groups = self.get_groups()
 
         for group in groups:
-
             group_data = dict()
-
             host_list = []
+            
             hosts = self.get_hosts(group)
-
             for host in hosts:
-
                 host_list.append(host['name'])
                 self.inventory['_meta']['hostvars'][host['name']] = self.get_host_vars(host)
 
