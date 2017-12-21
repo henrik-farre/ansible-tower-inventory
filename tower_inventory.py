@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
 
 '''
 tower_inventory.py
@@ -25,28 +25,37 @@ __email__ = "stigchristian@me.com"
 __license__ = "MIT"
 __version__ = "1.0.0"
 
-import requests
+import urllib2
 import json
 import argparse
 import os
 
 class TowerInventory(object):
 
-    ssl_verify = False
     inventory = dict()
 
     def __init__(self):
         ''' Main execution path '''
-
-        # Don't display urllib3 warnings (i.e. InsecureRequestWarning)
-        if not self.ssl_verify:
-            requests.packages.urllib3.disable_warnings()
 
         data_to_print = json.dumps(self.inventory)
 
         # Read settings and parse CLI arguments
         self.parse_cli_args()
         self.read_settings()
+
+        req = urllib2.Request(
+                url = self.tower_url + '/api/v1/authtoken/',
+                headers = {
+                    "Content-Type": "application/json"
+                    },
+                data = json.dumps({
+                    "username": self.tower_username,
+                    "password": self.tower_password
+                    })
+                )
+        response = urllib2.urlopen(req)
+        results = json.loads(response.read())
+        self.token = results['token']
 
         if self.args.list_inventories:
             data_to_print = self.list_inventories()
@@ -61,26 +70,22 @@ class TowerInventory(object):
         print(data_to_print)
 
     def read_settings(self):
-        tower_url = os.environ.get('TOWER_URL')
-        tower_username = os.environ.get('TOWER_USERNAME')
-        tower_password = os.environ.get('TOWER_PASSWORD')
-        tower_inventory_id = os.environ.get('TOWER_INVENTORY_ID')
+        self.tower_url = os.environ.get('TOWER_URL')
+        self.tower_username = os.environ.get('TOWER_USERNAME')
+        self.tower_password = os.environ.get('TOWER_PASSWORD')
+        self.tower_inventory_id = os.environ.get('TOWER_INVENTORY_ID')
 
-        if not tower_url:
+        if not self.tower_url:
             print "Plase set the environment variable TOWER_URL"
             exit()
 
-        if not tower_username or not tower_password:
+        if not self.tower_username or not self.tower_password:
             print "Please set the environment variables TOWER_USERNAME and TOWER_PASSWORD"
             exit()
 
-        if not tower_inventory_id and not self.args.list_inventories:
+        if not self.tower_inventory_id and not self.args.list_inventories:
             print "Please set the environment variable TOWER_INVENTORY_ID or use the argument --list-inventories to list available inventories"
             exit()
-
-        self.tower_url = tower_url
-        self.tower_credentials = (tower_username, tower_password)
-        self.tower_inventory_id = tower_inventory_id
 
     def parse_cli_args(self):
         ''' Command line argument processing '''
@@ -95,32 +100,72 @@ class TowerInventory(object):
     def list_inventories(self):
         data = []
 
-	r = requests.get(self.tower_url + "/api/v1/inventories/", auth=self.tower_credentials, verify=self.ssl_verify)
-	inventories = r.json()
+        req = urllib2.Request(
+                url = self.tower_url + '/api/v1/inventories/',
+                headers = {
+                    "Content-Type": "application/json",
+                    "Authorization": "Token " + self.token
+                    }
+                )
+        response = urllib2.urlopen(req)
+        inventories = json.loads(response.read())
 
-	for inventory in inventories['results']:
-	    data.append("[{}] {}".format(inventory['id'], inventory['name']))
+        for inventory in inventories['results']:
+            data.append("[{}] {}".format(inventory['id'], inventory['name']))
 
-	return '\n'.join(data)
+        return '\n'.join(data)
 
     def get_groups(self):
-        r = requests.get(self.tower_url + '/api/v1/inventories/' + self.tower_inventory_id + '/groups/', auth=self.tower_credentials, verify=self.ssl_verify)
-        return r.json()['results']
+        req = urllib2.Request(
+                url = self.tower_url + '/api/v1/inventories/' + self.tower_inventory_id + '/groups/',
+                headers = {
+                    "Content-Type": "application/json",
+                    "Authorization": "Token " + self.token
+                    }
+                )
+        response = urllib2.urlopen(req)
+        results = json.loads(response.read())
+
+        return results['results']
 
     def get_group_vars(self, group):
-        r = requests.get(self.tower_url + group['related']['variable_data'], auth=self.tower_credentials, verify=self.ssl_verify)
-        return r.json()
+        req = urllib2.Request(
+                url = self.tower_url + group['related']['variable_data'],
+                headers = {
+                    "Content-Type": "application/json",
+                    "Authorization": "Token " + self.token
+                    }
+                )
+        response = urllib2.urlopen(req)
+        results = json.loads(response.read())
+
+        return results
 
     def get_hosts(self, group):
-        r = requests.get(self.tower_url + group['related']['all_hosts'], auth=self.tower_credentials, verify=self.ssl_verify)
-        return r.json()['results']
+        req = urllib2.Request(
+                url = self.tower_url + group['related']['all_hosts'],
+                headers = {
+                    "Content-Type": "application/json",
+                    "Authorization": "Token " + self.token
+                    }
+                )
+        response = urllib2.urlopen(req)
+        results = json.loads(response.read())
+
+        return results['results']
 
     def get_host_vars(self, host):
-        r = requests.get(self.tower_url + host['related']['variable_data'], auth=self.tower_credentials, verify=self.ssl_verify)
-        if r.content: #Bug in Ansible Tower API, should return empty json ({}) when no data, but returns empty string
-            return r.json()
-        else:
-            return {}
+        req = urllib2.Request(
+                url = self.tower_url + host['related']['variable_data'],
+                headers = {
+                    "Content-Type": "application/json",
+                    "Authorization": "Token " + self.token
+                    }
+                )
+        response = urllib2.urlopen(req)
+        results = json.loads(response.read())
+
+        return results
 
     def list_inventory(self):
         data = dict()
@@ -132,7 +177,7 @@ class TowerInventory(object):
         for group in groups:
             group_data = dict()
             host_list = []
-            
+
             hosts = self.get_hosts(group)
             for host in hosts:
                 host_list.append(host['name'])
