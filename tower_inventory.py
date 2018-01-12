@@ -116,8 +116,10 @@ class TowerInventory(object):
         return '\n'.join(data)
 
     def get_groups(self):
+        # TODO: replace page_size with pagination support:
+        # https://docs.ansible.com/ansible-tower/latest/html/towerapi/pagination.html
         req = urllib2.Request(
-                url = self.tower_url + '/api/v1/inventories/' + self.tower_inventory_id + '/groups/',
+                url = self.tower_url + '/api/v1/inventories/' + self.tower_inventory_id + '/groups/?page_size=200',
                 headers = {
                     "Content-Type": "application/json",
                     "Authorization": "Token " + self.token
