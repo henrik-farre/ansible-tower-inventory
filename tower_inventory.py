@@ -169,11 +169,29 @@ class TowerInventory(object):
 
         return results
 
+    def get_inventory_vars(self):
+        req = urllib2.Request(
+                url = self.tower_url + '/api/v1/inventories/' + self.tower_inventory_id + '/variable_data/',
+                headers = {
+                    "Content-Type": "application/json",
+                    "Authorization": "Token " + self.token
+                    }
+                )
+        response = urllib2.urlopen(req)
+        results = json.loads(response.read())
+
+        return results
+
     def list_inventory(self):
         data = dict()
         host_vars = dict()
         self.inventory['_meta'] = dict()
         self.inventory['_meta']['hostvars'] = dict()
+
+        # Put all hosts for the requested inventory into a "fake" all group named __inventory_all__
+        self.inventory['__inventory_all__'] = dict()
+        self.inventory['__inventory_all__']['hosts'] = []
+        self.inventory['__inventory_all__']['vars'] = self.get_inventory_vars()
 
         groups = self.get_groups()
         for group in groups:
@@ -184,6 +202,7 @@ class TowerInventory(object):
             for host in hosts:
                 host_list.append(host['name'])
                 self.inventory['_meta']['hostvars'][host['name']] = self.get_host_vars(host)
+                self.inventory['__inventory_all__']['hosts'].append(host['name'])
 
             group_data['hosts'] = host_list
             group_vars = self.get_group_vars(group)
