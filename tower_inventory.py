@@ -145,7 +145,7 @@ class TowerInventory(object):
 
     def get_hosts(self, group):
         req = urllib2.Request(
-                url = self.tower_url + group['related']['all_hosts'],
+                url = self.tower_url + group['related']['all_hosts'] + '?enabled=true',
                 headers = {
                     "Content-Type": "application/json",
                     "Authorization": "Token " + self.token
