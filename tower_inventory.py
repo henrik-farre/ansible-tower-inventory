@@ -130,6 +130,20 @@ class TowerInventory(object):
 
         return results['results']
 
+    def get_group_children(self, group):
+        req = urllib2.Request(
+                url = self.tower_url + group['related']['children'],
+                headers = {
+                    "Content-Type": "application/json",
+                    "Authorization": "Token " + self.token
+                    }
+                )
+        response = urllib2.urlopen(req)
+        results = json.loads(response.read())
+
+        return results['results']
+
+
     def get_group_vars(self, group):
         req = urllib2.Request(
                 url = self.tower_url + group['related']['variable_data'],
@@ -197,6 +211,7 @@ class TowerInventory(object):
         for group in groups:
             group_data = dict()
             host_list = []
+            group_child_list = []
 
             hosts = self.get_hosts(group)
             for host in hosts:
@@ -208,6 +223,13 @@ class TowerInventory(object):
             group_vars = self.get_group_vars(group)
             if group_vars:
                 group_data['vars'] = group_vars
+
+            group_children = self.get_group_children(group)
+            for group_child in group_children:
+                group_child_list.append(group_child['name'])
+
+            if group_child_list:
+                group_data['children'] = group_child_list
 
             data[group['name']] = group_data
 
