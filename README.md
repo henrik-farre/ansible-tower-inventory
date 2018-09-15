@@ -1,6 +1,8 @@
 # ansible-tower-inventory
 Generates inventory that Ansible can understand by making API request to Ansible Tower / AWX.
 
+**Note**: Currently broken for AWX 1.04 and newer: https://github.com/ansible/awx/blob/devel/docs/auth/oauth.md
+
 Usage: 
 
 * Set the following environment variables:
