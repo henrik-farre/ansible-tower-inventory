@@ -1,7 +1,10 @@
+# Deprecated
+* Works with versions of AWX up til 1.0.4
+* For newer versions of AWX/Tower use https://docs.ansible.com/ansible/latest/plugins/inventory/tower.html or:
+* `curl -s -k -u "$TOWER_USERNAME:$TOWER_PASSWORD" "$TOWER_URL/api/v2/inventories/$TOWER_INVENTORY_ID/script/?hostvars=1&towervars=1&all=1"`
+
 # ansible-tower-inventory
 Generates inventory that Ansible can understand by making API request to Ansible Tower / AWX.
-
-**Note**: Currently broken for AWX 1.04 and newer: https://github.com/ansible/awx/blob/devel/docs/auth/oauth.md
 
 Usage: 
 
